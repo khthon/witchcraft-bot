@@ -60,6 +60,8 @@ func lineWebHook(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		log.Println(webhookTextMessage)
+
 		if _, err := lineBotClient.ReplyMessage(webhookTextMessage.replyToken, linebot.NewTextMessage(webhookTextMessage.message.text)).Do(); err != nil {
 			http.Error(w, err.Error(), 500)
 			return
