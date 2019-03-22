@@ -23,9 +23,13 @@ func main() {
 }
 
 func lineWebHook(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
+	switch r.Method {
+	case http.MethodPost:
+		fmt.Fprintf(w, "POST, %q", html.EscapeString(r.URL.Path))
+	default:
+		w.WriteHeader(405)
 		http.Error(w, "Invalid request method.", 405)
 	}
 
-	fmt.Fprintf(w, "POST, %q", html.EscapeString(r.URL.Path))
+
 }
