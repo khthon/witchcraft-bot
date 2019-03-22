@@ -1,8 +1,12 @@
 package main
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"github.com/line/line-bot-sdk-go/linebot"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -11,17 +15,6 @@ import (
 var lineBotConfig LineBotConfig
 var lineBotClient *linebot.Client
 var err error
-
-type lineWebhookBody struct {
-	destination string
-	events linebot.Event
-}
-
-//type TextMessage struct {
-//	id string `json:"id"'`
-//	messageType string `json:"type"'`
-//	text string `json:"text"'`
-//}
 
 func main() {
 	port := os.Getenv("PORT")
@@ -45,44 +38,42 @@ func lineWebHook(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
 		defer r.Body.Close()
-
-		var bodyDecoded lineWebhookBody
-
-		err := json.NewDecoder(r.Body).Decode(&bodyDecoded)
+		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			http.Error(w, err.Error(), 400)
+			http.Error(w, "Invalid request method.", 405)
 			return
 		}
 
-		log.Println(bodyDecoded.destination)
-		log.Println(bodyDecoded.events.ReplyToken)
+		if !validateSignature(lineBotConfig.ChannelSecret, r.Header.Get("X-Line-Signature"), body) {
+			http.Error(w, "Invalid request method.", 405)
+			return
+		}
 
-		//body, err := ioutil.ReadAll(r.Body)
+		request := &struct {
+			Events []*linebot.Event `json:"events"`
+		}{}
 
-		//if err != nil {
-		//	http.Error(w, err.Error(), 500)
-		//	return
-		//}
-		//
-		//log.Println(body)
-		//
-		//var webhookTextMessage WebhookTextMessage
-		//err = json.Unmarshal(body, &webhookTextMessage)
-		//if err != nil {
-		//	http.Error(w, err.Error(), 500)
-		//	return
-		//}
+		if err = json.Unmarshal(body, request); err != nil {
+			http.Error(w, "Invalid request method.", 405)
+		}
 
-		//log.Println(webhookTextMessage)
-		//
-		//if _, err := lineBotClient.ReplyMessage(webhookTextMessage.replyToken, linebot.NewTextMessage("Hello, My lord.")).Do(); err != nil {
-		//	http.Error(w, err.Error(), 500)
-		//	return
-		//}
+		log.Println(request.Events)
 	default:
-		w.WriteHeader(405)
 		http.Error(w, "Invalid request method.", 405)
 	}
+}
 
+func validateSignature(channelSecret, signature string, body []byte) bool {
+	decoded, err := base64.StdEncoding.DecodeString(signature)
+	if err != nil {
+		return false
+	}
+	hash := hmac.New(sha256.New, []byte(channelSecret))
 
+	_, err = hash.Write(body)
+	if err != nil {
+		return false
+	}
+
+	return hmac.Equal(decoded, hash.Sum(nil))
 }
