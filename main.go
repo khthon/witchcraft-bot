@@ -53,6 +53,8 @@ func lineWebHook(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		log.Println(body)
+
 		var webhookTextMessage WebhookTextMessage
 		err = json.Unmarshal(body, &webhookTextMessage)
 		if err != nil {
