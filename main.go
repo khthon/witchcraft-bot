@@ -54,7 +54,8 @@ func lineWebHook(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		log.Println(bodyDecoded)
+		log.Println(bodyDecoded.destination)
+		log.Println(bodyDecoded.events.ReplyToken)
 
 		//body, err := ioutil.ReadAll(r.Body)
 
