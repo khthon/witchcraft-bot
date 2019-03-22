@@ -1,9 +1,6 @@
 package main
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/base64"
 	"github.com/line/line-bot-sdk-go/linebot"
 	"log"
 	"net/http"
@@ -11,7 +8,7 @@ import (
 )
 
 var lineBotConfig LineBotConfig
-var lineBotClient *linebot.Client
+var bot *linebot.Client
 var err error
 
 func main() {
@@ -23,7 +20,7 @@ func main() {
 	log.Println("Port: " + port)
 
 	lineBotConfig = GetLineBotConfig()
-	lineBotClient, err = linebot.New(lineBotConfig.ChannelSecret, lineBotConfig.ChannelAccessToken)
+	bot, err = linebot.New(lineBotConfig.ChannelSecret, lineBotConfig.ChannelAccessToken)
 	if err != nil {
 		log.Fatal("Can't create line bot")
 	}
@@ -35,34 +32,26 @@ func main() {
 func lineWebHook(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
-		events, err := lineBotClient.ParseRequest(r)
+		events, err := bot.ParseRequest(r)
 		if err != nil {
-			http.Error(w, "Invalid request method.", 405)
-			return
+			if err == linebot.ErrInvalidSignature {
+				w.WriteHeader(400)
+			} else {
+				w.WriteHeader(500)
+			}
 		}
 
 		for _, event := range events {
-			switch event.Type {
-			case linebot.EventTypeMessage:
-				log.Println(event.ReplyToken)
+			if event.Type == linebot.EventTypeMessage {
+				switch message := event.Message.(type) {
+				case *linebot.TextMessage:
+					if _, err := bot.ReplyMessage(event.ReplyToken, linebot.NewTextMessage(message.Text)).Do(); err != nil {
+						log.Print(err)
+					}
+				}
 			}
 		}
 	default:
 		http.Error(w, "Invalid request method.", 405)
 	}
-}
-
-func validateSignature(channelSecret, signature string, body []byte) bool {
-	decoded, err := base64.StdEncoding.DecodeString(signature)
-	if err != nil {
-		return false
-	}
-	hash := hmac.New(sha256.New, []byte(channelSecret))
-
-	_, err = hash.Write(body)
-	if err != nil {
-		return false
-	}
-
-	return hmac.Equal(decoded, hash.Sum(nil))
 }
