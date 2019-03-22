@@ -4,9 +4,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
-	"encoding/json"
 	"github.com/line/line-bot-sdk-go/linebot"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -37,28 +35,18 @@ func main() {
 func lineWebHook(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
-		defer r.Body.Close()
-		body, err := ioutil.ReadAll(r.Body)
+		events, err := lineBotClient.ParseRequest(r)
 		if err != nil {
 			http.Error(w, "Invalid request method.", 405)
 			return
 		}
 
-		if !validateSignature(lineBotConfig.ChannelSecret, r.Header.Get("X-Line-Signature"), body) {
-			http.Error(w, "Invalid request method.", 405)
-			return
+		for _, event := range events {
+			switch event.Type {
+			case linebot.EventTypeMessage:
+				log.Println(event.ReplyToken)
+			}
 		}
-
-		request := &struct {
-			Events []*linebot.Event `json:"events"`
-		}{}
-
-		if err = json.Unmarshal(body, request); err != nil {
-			http.Error(w, "Invalid request method.", 405)
-		}
-
-		log.Println(len(request.Events))
-		log.Println(len(request.Events[0].ReplyToken))
 	default:
 		http.Error(w, "Invalid request method.", 405)
 	}
