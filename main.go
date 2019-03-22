@@ -1,14 +1,29 @@
 package main
 
 import (
-	"fmt"
-	"html"
+	"encoding/json"
+	"github.com/line/line-bot-sdk-go/linebot"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 )
 
-var lineBot LineBot
+var lineBotConfig LineBotConfig
+var lineBotClient *linebot.Client
+var err error
+
+type WebhookTextMessage struct {
+	replyToken string `json:"replyToken"`
+	messageType string `json:"type"`
+	message TextMessage `json:"message"`
+}
+
+type TextMessage struct {
+	id string `json:"id"'`
+	messageType string `json:"type"'`
+	text string `json:"text"'`
+}
 
 func main() {
 	port := os.Getenv("PORT")
@@ -18,6 +33,12 @@ func main() {
 
 	log.Println("Port: " + port)
 
+	lineBotConfig = GetLineBotConfig()
+	lineBotClient, err = linebot.New(lineBotConfig.ChannelSecret, lineBotConfig.ChannelAccessToken)
+	if err != nil {
+		log.Fatal("Can't create line bot")
+	}
+
 	http.HandleFunc("/linewebhook", lineWebHook)
 	log.Fatal(http.ListenAndServe(":" + port, nil))
 }
@@ -25,7 +46,24 @@ func main() {
 func lineWebHook(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
-		fmt.Fprintf(w, "POST, %q", html.EscapeString(r.URL.Path))
+		body, err := ioutil.ReadAll(r.Body)
+		defer r.Body.Close()
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
+		var webhookTextMessage WebhookTextMessage
+		err = json.Unmarshal(body, &webhookTextMessage)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
+		if _, err := lineBotClient.ReplyMessage(webhookTextMessage.replyToken, linebot.NewTextMessage(webhookTextMessage.message.text)).Do(); err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
 	default:
 		w.WriteHeader(405)
 		http.Error(w, "Invalid request method.", 405)

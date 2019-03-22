@@ -5,13 +5,13 @@ import (
 	"os"
 )
 
-type LineBot struct {
+type LineBotConfig struct {
 	ChannelID string
 	ChannelSecret string
 	ChannelAccessToken string
 }
 
-func NewLineBot() LineBot {
+func GetLineBotConfig() LineBotConfig {
 	lineChannelID := os.Getenv("LineChannelID")
 	if lineChannelID == "" {
 		log.Fatal("$LineChannelID must be set")
@@ -33,14 +33,10 @@ func NewLineBot() LineBot {
 
 	log.Println(lineChannelSecret)
 
-	return LineBot{
+	return LineBotConfig{
 		ChannelID: lineChannelID,
 		ChannelSecret:lineChannelSecret,
 		ChannelAccessToken: lineChannelAccessToken,
 	}
-}
-
-func (lineBot LineBot) ReplyText(message string) {
-
 }
 
