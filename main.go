@@ -70,7 +70,7 @@ func lineWebHook(w http.ResponseWriter, r *http.Request) {
 
 		log.Println(webhookTextMessage)
 
-		if _, err := lineBotClient.ReplyMessage(webhookTextMessage.replyToken, linebot.NewTextMessage(webhookTextMessage.message.text)).Do(); err != nil {
+		if _, err := lineBotClient.ReplyMessage(webhookTextMessage.replyToken, linebot.NewTextMessage("Hello, My lord.")).Do(); err != nil {
 			http.Error(w, err.Error(), 500)
 			return
 		}
