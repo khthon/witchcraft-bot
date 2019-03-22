@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"github.com/line/line-bot-sdk-go/linebot"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
