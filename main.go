@@ -1,9 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"net/http"
 	"os"
 )
+
+var lineBot LineBot
 
 func main() {
 	port := os.Getenv("PORT")
@@ -11,26 +15,12 @@ func main() {
 		log.Fatal("$PORT must be set")
 	}
 
-	log.Println(port)
+	log.Println("Port: " + port)
 
-	lineChannelID := os.Getenv("LineChannelID")
-	if lineChannelID == "" {
-		log.Fatal("$LineChannelID must be set")
-	}
+	http.HandleFunc("/linewebhook", handler)
+	log.Fatal(http.ListenAndServe(":" + port, nil))
+}
 
-	log.Println(lineChannelID)
-
-	lineChannelAccessToken := os.Getenv("LineChannelAccessToken")
-	if lineChannelAccessToken == "" {
-		log.Fatal("LineChannelAccessToken must be set")
-	}
-
-	log.Println(lineChannelAccessToken)
-
-	lineChannelSecret := os.Getenv("LineChannelSecret")
-	if lineChannelSecret == "" {
-		log.Fatal("LineChannelSecret must be set")
-	}
-
-	log.Println(lineChannelSecret)
+func handler(w http.ResponseWriter, r *http.Request) {
+	fmt.Print(w, "Hello, World!")
 }
