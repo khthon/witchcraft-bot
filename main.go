@@ -57,7 +57,8 @@ func lineWebHook(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Invalid request method.", 405)
 		}
 
-		log.Println(request.Events)
+		log.Println(len(request.Events))
+		log.Println(len(request.Events[0].ReplyToken))
 	default:
 		http.Error(w, "Invalid request method.", 405)
 	}
