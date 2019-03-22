@@ -16,14 +16,14 @@ var err error
 type WebhookTextMessage struct {
 	replyToken string `json:"replyToken"`
 	messageType string `json:"type"`
-	message TextMessage `json:"message"`
+	//message TextMessage `json:"message"`
 }
 
-type TextMessage struct {
-	id string `json:"id"'`
-	messageType string `json:"type"'`
-	text string `json:"text"'`
-}
+//type TextMessage struct {
+//	id string `json:"id"'`
+//	messageType string `json:"type"'`
+//	text string `json:"text"'`
+//}
 
 func main() {
 	port := os.Getenv("PORT")
@@ -46,21 +46,28 @@ func main() {
 func lineWebHook(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
-		body, err := ioutil.ReadAll(r.Body)
 		defer r.Body.Close()
-		if err != nil {
-			http.Error(w, err.Error(), 500)
-			return
-		}
-
-		log.Println(body)
-
 		var webhookTextMessage WebhookTextMessage
-		err = json.Unmarshal(body, &webhookTextMessage)
+		err := json.NewDecoder(r.Body).Decode(&webhookTextMessage)
 		if err != nil {
-			http.Error(w, err.Error(), 500)
+			http.Error(w, err.Error(), 400)
 			return
 		}
+		//body, err := ioutil.ReadAll(r.Body)
+
+		//if err != nil {
+		//	http.Error(w, err.Error(), 500)
+		//	return
+		//}
+		//
+		//log.Println(body)
+		//
+		//var webhookTextMessage WebhookTextMessage
+		//err = json.Unmarshal(body, &webhookTextMessage)
+		//if err != nil {
+		//	http.Error(w, err.Error(), 500)
+		//	return
+		//}
 
 		log.Println(webhookTextMessage)
 
