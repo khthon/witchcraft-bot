@@ -47,6 +47,9 @@ func lineWebHook(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		defer r.Body.Close()
 		var webhookTextMessage WebhookTextMessage
+
+		log.Println(r.Body)
+
 		err := json.NewDecoder(r.Body).Decode(&webhookTextMessage)
 		if err != nil {
 			http.Error(w, err.Error(), 400)
