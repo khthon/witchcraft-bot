@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"html"
 	"log"
 	"net/http"
 	"os"
@@ -17,10 +18,14 @@ func main() {
 
 	log.Println("Port: " + port)
 
-	http.HandleFunc("/linewebhook", handler)
+	http.HandleFunc("/linewebhook", lineWebHook)
 	log.Fatal(http.ListenAndServe(":" + port, nil))
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Print(w, "Hello, World!")
+func lineWebHook(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Invalid request method.", 405)
+	}
+
+	fmt.Fprintf(w, "POST, %q", html.EscapeString(r.URL.Path))
 }
