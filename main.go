@@ -12,10 +12,9 @@ var lineBotConfig LineBotConfig
 var lineBotClient *linebot.Client
 var err error
 
-type WebhookTextMessage struct {
-	replyToken string `json:"replyToken"`
-	messageType string `json:"type"`
-	//message TextMessage `json:"message"`
+type lineWebhookBody struct {
+	destination string
+	events linebot.Event
 }
 
 //type TextMessage struct {
@@ -46,15 +45,17 @@ func lineWebHook(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
 		defer r.Body.Close()
-		var webhookTextMessage WebhookTextMessage
 
-		log.Println(r.Body)
+		var bodyDecoded lineWebhookBody
 
-		err := json.NewDecoder(r.Body).Decode(&webhookTextMessage)
+		err := json.NewDecoder(r.Body).Decode(&bodyDecoded)
 		if err != nil {
 			http.Error(w, err.Error(), 400)
 			return
 		}
+
+		log.Println(bodyDecoded)
+
 		//body, err := ioutil.ReadAll(r.Body)
 
 		//if err != nil {
@@ -71,12 +72,12 @@ func lineWebHook(w http.ResponseWriter, r *http.Request) {
 		//	return
 		//}
 
-		log.Println(webhookTextMessage)
-
-		if _, err := lineBotClient.ReplyMessage(webhookTextMessage.replyToken, linebot.NewTextMessage("Hello, My lord.")).Do(); err != nil {
-			http.Error(w, err.Error(), 500)
-			return
-		}
+		//log.Println(webhookTextMessage)
+		//
+		//if _, err := lineBotClient.ReplyMessage(webhookTextMessage.replyToken, linebot.NewTextMessage("Hello, My lord.")).Do(); err != nil {
+		//	http.Error(w, err.Error(), 500)
+		//	return
+		//}
 	default:
 		w.WriteHeader(405)
 		http.Error(w, "Invalid request method.", 405)
